@@ -1,0 +1,51 @@
+#!/bin/bash
+# script for checking IPSec tunnels on Fortigate appliance. It uses SNMP protocol to get the data from appliance.
+# The parameter -a is tunnel name as seen in Fortigate web interface.
+# This script have to be executable.
+# check crontab also
+#
+#
+#
+############################################################
+# Nagios command definition:                               #
+#                                                          #
+# define command{                                          #
+#         command_name    check-fg-ipsec                   #
+#         command_line    $USER1$/check_fg_ipsec -a $ARG1$ #
+#         }                                                #
+############################################################
+#
+# created by daniel.trifonov@softwaregroup.com
+# 2020-11-18
+#
+ 
+snmpComm="community_string"
+ipAddr=192.168.0.1
+ 
+if [ ! -f /tmp/fg-tunnels ]
+then
+    /usr/local/nagios/libexec/fg_get_tunnels
+fi
+ 
+while getopts "a:" option; do
+    case "${option}" in
+        a)
+            tunnelName=${OPTARG}
+            tunnelNumber="$(grep $tunnelName /tmp/fg-tunnels)" && tunnelNumber="${tunnelNumber% =*}" && tunnelNumber="${tunnelNumber#*.}"
+            tunnelStatus="$(snmpget -m ALL -v2c -c $snmpComm $ipAddr ifOperStatus.$tunnelNumber)" && tunnelStatus_="${tunnelStatus#*INTEGER:}" && tunnelStatus_="${tunnelStatus_%(*}"
+            tunnelStatusNum="${tunnelStatus#*(}" && tunnelStatusNum="${tunnelStatusNum%)*}"
+            case $tunnelStatusNum in
+                [1]*)    /usr/bin/printf "%s - UP|1\n" $tunnelName
+                         exit 0
+                         ;;
+                [2]*)    /usr/bin/printf "%s - DOWN|0\n" $tunnelName
+                         exit 2
+                         ;;
+                [*]*)    /usr/bin/printf "%s - UNREACHABLE|2" $tunnelName
+                         exit 1
+                         ;;
+                 esac
+        ;;
+        esac
+        exit
+done
