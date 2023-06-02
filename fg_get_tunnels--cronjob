@@ -1,0 +1,4 @@
+#run the script on startup and every morning to update tunnel list.
+#
+@reboot sleep 30; /usr/local/nagios/libexec/fg_get_tunnels
+1 8 * * * /usr/local/nagios/libexec/fg_get_tunnels
