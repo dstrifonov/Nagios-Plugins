@@ -1,0 +1,37 @@
+#!/bin/bash
+# This is a script executed by crontab.
+# It serves to pull SNMP data and grep all tunnel names from Fortigate device.
+# All tunnel have not to contain OID in their name.
+# OID is a string related to missing interface.
+#
+# This script have to be executable.
+#
+# Crontab entries:
+# @reboot sleep 30; /usr/local/nagios/libexec/fg_get_tunnels
+# 1 8 * * * /usr/local/nagios/libexec/fg_get_tunnels
+#
+#
+#
+# created by daniel.trifonov@softwaregroup.com
+# 2020-11-18
+#
+snmpComm="community_string"
+ipAddr=192.168.0.1
+ 
+ 
+if [ ! -f /tmp/fg-tunnels ]
+then
+    touch /tmp/fg-tunnels
+fi
+if [ ! -f /tmp/fg-tmp ]
+then
+    touch /tmp/fg-tmp
+fi
+ 
+truncate -s0 /tmp/fg-tmp
+for i in {1..100}
+    do snmpget -m ALL -v2c -c $snmpComm $ipAddr ifName.$i | grep -v OID >> /tmp/fg-tmp
+done
+cp -fu /tmp/fg-tmp /tmp/fg-tunnels
+ 
+exit 0
