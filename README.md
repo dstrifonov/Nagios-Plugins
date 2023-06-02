@@ -1,4 +1,4 @@
-# Nagios-Plugins
+# Nagios Plugins IPSec Fortigate
 Custom-made Nagios Plugins
 
 This is a plugin for checking state of IPsec tunnels on Fortigate device.
